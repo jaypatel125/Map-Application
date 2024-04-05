@@ -1,0 +1,322 @@
+<!-- StAuth10244: I Jay Patel, 000881881 certify that this material is my original work. No other person's work has been used without due acknowledgement. I have not made my work available to anyone else. -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TravelNest</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <div class="map"></div>
+    <script
+      async
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDF2K4MVXawaKO0IQONBA5Jc04mBIfbdxE&callback=initMap"
+    ></script>
+    <style>
+      h1 {
+        text-align: center;
+      }
+      #map {
+        height: 400px;
+        margin-bottom: 5%;
+      }
+      #addressInput {
+        margin-bottom: 2%;
+      }
+      @media (max-width: 600px) {
+        #map {
+          height: 500px;
+          margin: auto 10% 5% 10%;
+        }
+        .mb-3 {
+          display: grid;
+        }
+        button {
+          margin: 5px 70px;
+        }
+        .btn-primary {
+          background-color: brown;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container mt-4">
+      <h1 class="mb-4">Explore Local Guide</h1>
+
+      <!-- Map container -->
+      <div id="map"></div>
+      <div class="mb-3">
+        <button
+          class="btn btn-success"
+          id="geolocationBtn"
+          onclick="getUserLocation()"
+        >
+          Get My Location
+        </button>
+        <button class="btn btn-primary" onclick="filterMarkers('Park')">
+          Parks
+        </button>
+        <button class="btn btn-primary" onclick="filterMarkers('Museum')">
+          Museums
+        </button>
+        <button class="btn btn-primary" onclick="filterMarkers('Fall')">
+          Falls
+        </button>
+        <button class="btn btn-primary" onclick="filterMarkers('Mall')">
+          Malls
+        </button>
+        <button class="btn btn-primary" onclick="filterMarkers('Parking')">
+          Parking
+        </button>
+        <button class="btn btn-primary" onclick="showAllMarkers()">
+          Show All
+        </button>
+      </div>
+      <div class="mb-3">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Enter an address"
+          id="addressInput"
+        />
+        <button
+          class="btn btn-primary"
+          id="addLocationBtn"
+          onclick="addLocationFromInput()"
+        >
+          Add Location
+        </button>
+      </div>
+    </div>
+
+    <script>
+      let map;
+      let markers = [];
+
+      function initMap() {
+        // Initial map setup
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: { lat: 43.25, lng: -79.85 },
+          zoom: 11.5,
+        });
+
+        // Add markers
+        addMarker(
+          { lat: 43.2451236, lng: -79.8661081 },
+          "Sam Lawrence Park",
+          "Park",
+          "Urban park with wildflowers, a rock garden & trails, plus striking views of the city skyline."
+        );
+        addMarker(
+          { lat: 43.257521, lng: -79.872075 },
+          "Art Gallery of Hamilton",
+          "Museum",
+          "Established museum with works by acclaimed artists, including Canadian & international works."
+        );
+        addMarker(
+          { lat: 43.256308, lng: -79.771826 },
+          "Hamilton Museum of Steam & Technology",
+          "Museum",
+          "Exhibits on Canada’s industrial revolution in an old waterworks, including 2 steam pump engines."
+        );
+        addMarker(
+          { lat: 43.2741191, lng: -79.968953 },
+          "Dundas Peak",
+          "Park",
+          "Nature trails lead to this picturesque overlook with scenic views of towns & waterfalls."
+        );
+        addMarker(
+          { lat: 43.2003991, lng: -79.8196338 },
+          "Albion Falls",
+          "Fall",
+          "This 19-m. cascade waterfall with a Lover's Leap can be reached via several walking trails."
+        );
+        addMarker(
+          { lat: 43.241292, lng: -79.900401 },
+          "Upper Chedoke Falls",
+          "Fall",
+          "Year-round ribbon waterfall with a 9-m. width & 18-m. drop, tucked away in an urban environment."
+        );
+        addMarker(
+          { lat: 43.217975, lng: -79.861848 },
+          "CF Lime Ridge",
+          "Mall",
+          "Airy, light-filled shopping destination features 2-levels of shops, kiosks & restaurants."
+        );
+        addMarker(
+          { lat: 43.258318, lng: -79.870522 },
+          "Jackson Square",
+          "Mall",
+          "Large facility combining shopping, 2 food courts, office space, hotel access & 6 movie screens."
+        );
+        addMarker(
+          { lat: 43.239413, lng: -79.877799 },
+          "Car Parking Lot",
+          "Parking",
+          "Municipal Parking Lot"
+        );
+        addMarker(
+          { lat: 43.253473, lng: -79.865039 },
+          "Jackson St Parking",
+          "Parking",
+          "119 Jackson St E Parking"
+        );
+      }
+
+      function addMarker(position, title, type, info) {
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title,
+          icon: getMarkerIcon(type),
+          type: type,
+        });
+
+        const infowindowContent = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = title;
+        infowindowContent.appendChild(strong);
+        infowindowContent.appendChild(document.createElement("br"));
+        infowindowContent.appendChild(document.createTextNode(info));
+        infowindowContent.appendChild(document.createElement("br"));
+
+        const directionsButton = document.createElement("button");
+        directionsButton.textContent = "Get Directions";
+        directionsButton.onclick = function () {
+          getDirections(position.lat, position.lng);
+        };
+        infowindowContent.appendChild(directionsButton);
+
+        const infowindow = new google.maps.InfoWindow({
+          content: infowindowContent,
+        });
+
+        marker.addListener("click", () => {
+          infowindow.open(map, marker);
+        });
+
+        markers.push(marker);
+      }
+
+      function getMarkerIcon(type) {
+        if (type === "Park")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/tree.png";
+        if (type === "Museum")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/arts.png";
+        if (type === "Fall")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/water.png";
+        if (type === "Mall")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/shopping.png";
+        if (type === "Parking")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/parkinglot.png";
+        if (type === "UserLocation")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/man.png"; // Icon for user location
+        if (type === "EnteredLocation")
+          return "http://maps.gstatic.com/mapfiles/ms2/micons/homegardenbusiness.png"; // Icon for entered location
+        return "https://maps.google.com/mapfiles/ms/icons/red-dot.png";
+      }
+
+      function filterMarkers(type) {
+        // Show only markers of the selected type, hide others
+        markers.forEach((marker) => {
+          marker.setVisible(type === "all" || marker.type === type);
+        });
+      }
+
+      function showAllMarkers() {
+        // Show all markers
+        markers.forEach((marker) => {
+          marker.setVisible(true);
+        });
+      }
+
+      function getDirections(destLat, destLng) {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            const origin = new google.maps.LatLng(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            const destination = new google.maps.LatLng(destLat, destLng);
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer();
+
+            directionsService.route(
+              {
+                origin: origin,
+                destination: destination,
+                travelMode: google.maps.TravelMode.DRIVING,
+              },
+              function (response, status) {
+                if (status === google.maps.DirectionsStatus.OK) {
+                  directionsRenderer.setDirections(response);
+                  const mapDirections = new google.maps.Map(
+                    document.getElementById("map"),
+                    {
+                      zoom: 10,
+                      center: origin,
+                    }
+                  );
+                  directionsRenderer.setMap(mapDirections);
+                } else {
+                  window.alert("Directions request failed due to " + status);
+                }
+              }
+            );
+          });
+        } else {
+          window.alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function getUserLocation() {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function (position) {
+            const userLocation = new google.maps.LatLng(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            addMarker(
+              userLocation,
+              "Your Location",
+              "UserLocation",
+              "This is your current location"
+            );
+          });
+        } else {
+          window.alert("Geolocation is not supported by this browser.");
+        }
+      }
+
+      function addLocationFromInput() {
+        const addressInput = document.getElementById("addressInput");
+        const geocoder = new google.maps.Geocoder();
+
+        geocoder.geocode(
+          { address: addressInput.value },
+          function (results, status) {
+            if (status === google.maps.GeocoderStatus.OK) {
+              const location = results[0].geometry.location;
+              addMarker(
+                location,
+                "Entered Location",
+                "EnteredLocation",
+                "This is the entered location"
+              );
+            } else {
+              window.alert(
+                "Geocode was not successful for the following reason: " + status
+              );
+            }
+          }
+        );
+      }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>
